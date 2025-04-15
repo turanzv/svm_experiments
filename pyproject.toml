@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "fenbushi-data-analysis-sugihara"
+version = "0.1.0"
+description = ""
+authors = ["sugihara1997 <bananaprince9317@gmail.com>", "Turan Vural <turanzv@gmail.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.1"
+ipykernel = "^6.29.2"
+notebook = "^7.1.0"
+pygwalker = "^0.4.9.5"
+ipylab = "^1.0.0"
+plotly= "^5.24.1"
+matplotlib="^3.10.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
