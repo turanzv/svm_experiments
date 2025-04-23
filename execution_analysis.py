@@ -396,13 +396,13 @@ def make_pc_trend_plot(pc_sizes: list[int],
 
     # Update axes ranges and ticks
     fig.update_yaxes(
-        title_text=None,
+        title_text="Average Evictions",
         range=[0, 1.0],
         tickvals=[0.0, 0.25, 0.5, 0.75, 1.0],
         secondary_y=False
     )
     fig.update_yaxes(
-        title_text=None,
+        title_text="Average Program Cache Time (μs)",
         range=[0, 45000],
         tickvals=[0, 15000, 30000, 45000],
         ticktext=["0", "15k", "30k", "45k"],
@@ -411,6 +411,7 @@ def make_pc_trend_plot(pc_sizes: list[int],
 
     # X-axis ticks and range
     fig.update_xaxes(
+        title_text="Program Cache Size",
         tickmode="array",
         tickvals=[512, 1024, 1536, 2048],
         ticktext=["512", "1024", "", "2048"],
@@ -420,10 +421,20 @@ def make_pc_trend_plot(pc_sizes: list[int],
     # Global layout styling
     fig.update_layout(
         font=dict(family="serif", size=20),
-        showlegend=False,
+        showlegend=True,
+        template="simple_white",
         margin=dict(l=20, r=20, t=20, b=20),
         width=800,
-        height=400
+        height=400,
+        legend=dict(
+            x=.9,    # Far right
+            y=1,    # Top
+            xanchor="right",  # Anchor at the right edge
+            yanchor="top",    # Anchor at the top edge
+            bordercolor="black",
+            borderwidth=1,
+            bgcolor="white"   # (optional) white legend background for clarity
+        )
     )
 
     # Export to PDF
@@ -457,14 +468,14 @@ PC_2048 = 'logs/2048PC/2048PC-2025-03-12-19-21-02-mainnet-beta.log'
 PC_1024 = 'logs/1024PC/1024PC-2025-03-12-07-03-06-mainnet-beta.log'
 PC_512 = 'logs/512PC/512PC-2025-03-11-17-33-19-mainnet-beta.log'
 
-generate_figures("figures/execution/1_5_TB_1", TB_15_1)
-generate_figures("figures/execution/1_5_TB_0", TB_15_0)
-generate_figures("figures/execution/1_TB_1", TB_1_1)
-generate_figures("figures/execution/1_TB_0", TB_1_0)
-generate_figures("figures/execution/512_GB_1", GB_512_1)
-generate_figures("figures/execution/512_GB_0", GB_512_0)
-generate_figures("figures/execution/256_GB_1", GB_256_1)
-generate_figures("figures/execution/256_GB_0", GB_256_0)
+# generate_figures("figures/execution/1_5_TB_1", TB_15_1)
+# generate_figures("figures/execution/1_5_TB_0", TB_15_0)
+# generate_figures("figures/execution/1_TB_1", TB_1_1)
+# generate_figures("figures/execution/1_TB_0", TB_1_0)
+# generate_figures("figures/execution/512_GB_1", GB_512_1)
+# generate_figures("figures/execution/512_GB_0", GB_512_0)
+# generate_figures("figures/execution/256_GB_1", GB_256_1)
+# generate_figures("figures/execution/256_GB_0", GB_256_0)
 # generate_figures("figures/execution/128_GB_1", GB_128_0)
 
 pc_512_df = parse_program_cache_df(PC_512)
