@@ -70,6 +70,8 @@ def parse_program_cache_df(log_file):
     df_pc['end'] = df_pc['timestamp'].apply(convert_to_unixtime)
     df_pc['start'] = df_pc['end'] - df_pc['program_cache_us']
     df_pc['duration_us'] = df_pc['program_cache_us']
+
+    add_elapsed_time_column(df_pc, time_col='start')
     return df_pc
 
 def parse_program_cache_prune_df(log_file):
@@ -89,6 +91,8 @@ def parse_program_cache_prune_df(log_file):
     df_pcp['end'] = df_pcp['timestamp'].apply(convert_to_unixtime)
     df_pcp['start'] = df_pcp['end'] - df_pcp['program_cache_prune_ms'] * 1000
     df_pcp['duration_us'] = df_pcp['program_cache_prune_ms'] * 1000
+
+    add_elapsed_time_column(df_pcp, time_col='start')
     return df_pcp
 
 def parse_loaded_programs_cache_df(log_file):
@@ -106,6 +110,8 @@ def parse_loaded_programs_cache_df(log_file):
                     loaded_data.append(fields)
     df_lpc = pd.DataFrame(loaded_data)
     df_lpc['unixtime_us'] = df_lpc['timestamp'].apply(convert_to_unixtime)
+
+    add_elapsed_time_column(df_lpc, time_col='unixtime_us')
     return df_lpc
 
 def convert_to_unixtime(timestamp):
@@ -117,6 +123,10 @@ def convert_to_unixtime(timestamp):
 def aggregate_tps(row, df):
     mask = (df['start'] <= row['t']) & (df['end'] >= row['t'])
     return df.loc[mask, 'tps'].sum()
+
+def add_elapsed_time_column(df, time_col='start'):
+    base_time = df[time_col].min()
+    df['elapsed_time_hours'] = (df[time_col] - base_time) / 3_600_000_000  # µs to hours
 
 def parse_execution_logs(log_file):
     df = parse_tps_df(log_file)
@@ -170,8 +180,262 @@ def make_tps_plot(experiment, df):
 
     fig.write_image(f"{experiment}_Exec_TPS.pdf")
 
+def make_pc_plot(experiment, df_program_cache):
+    fig1 = go.Figure()
+    fig1.add_trace(go.Scatter(
+        x=df_program_cache['elapsed_time_hours'],
+        y=df_program_cache['program_cache_us'],
+        mode='markers',
+        marker=dict(size=2, color='blue')
+    ))
+
+    fig1.update_layout(
+        showlegend=False,
+        title=None,
+        template="simple_white",
+        width=800,
+        height=400,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            title=None,
+            tickmode='linear',
+            dtick=1,
+            tickformat=".1f",
+            range=[
+                df_program_cache['elapsed_time_hours'].min(),
+                df_program_cache['elapsed_time_hours'].max()
+            ],
+            anchor='y',
+            position=0
+        ),
+        yaxis=dict(
+            title=None,
+            range=[0, 4_000_000],
+            tickvals=[0, 1_000_000, 2_000_000, 3_000_000, 4_000_000],
+            ticktext=["0", "1M", "2M", "3M", "4M"],
+            anchor='x',
+            position=0
+        )
+    )
+    fig1.write_image(f"{experiment}_ProgramCacheTime.pdf")
+
+def make_pc_prune_plot(experiment, df_program_cache_prune):
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(
+        x=df_program_cache_prune['elapsed_time_hours'],
+        y=df_program_cache_prune['program_cache_prune_ms'],
+        mode='markers',
+        marker=dict(size=2, color='orange')
+    ))
+
+    fig2.update_layout(
+        showlegend=False,
+        title=None,
+        template="simple_white",
+        width=800,
+        height=400,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            title=None,
+            tickmode='linear',
+            dtick=1,
+            tickformat=".1f",
+            range=[
+                df_program_cache_prune['elapsed_time_hours'].min(),
+                df_program_cache_prune['elapsed_time_hours'].max()
+            ],
+            anchor='y',
+            position=0
+        ),
+        yaxis=dict(
+            title=None,
+            range=[0, 120],
+            tickvals=[0, 30, 60, 90, 120],
+            anchor='x',
+            position=0
+        )
+    )
+    fig2.write_image(f"{experiment}_ProgramCachePruneTime.pdf")
+
+def make_pc_misses_plot(experiment, df_loaded_programs_cache):
+    fig_misses = go.Figure()
+    fig_misses.add_trace(go.Scatter(
+        x=df_loaded_programs_cache['elapsed_time_hours'],
+        y=df_loaded_programs_cache['misses'],
+        mode='lines',
+        line=dict(width=1, color='red')
+    ))
+
+    fig_misses.update_layout(
+        showlegend=False,
+        title=None,
+        template="simple_white",
+        width=800,
+        height=400,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            title=None,
+            tickmode='linear',
+            dtick=1,
+            tickformat=".1f",
+            range=[
+                df_loaded_programs_cache['elapsed_time_hours'].min(),
+                df_loaded_programs_cache['elapsed_time_hours'].max()
+            ],
+            anchor='y',
+            position=0
+        ),
+        yaxis=dict(
+            title=None,
+            range=[0, 20],
+            tickvals=[0, 5, 10, 15, 20],
+            anchor='x',
+            position=0
+        )
+    )
+
+    fig_misses.write_image(f"{experiment}_LoadedProgramsCacheMisses.pdf")
+
+def make_pc_evictions_plot(experiment, df_loaded_programs_cache):
+    fig_evictions = go.Figure()
+    fig_evictions.add_trace(go.Scatter(
+        x=df_loaded_programs_cache['elapsed_time_hours'],
+        y=df_loaded_programs_cache['evictions'],
+        mode='lines',
+        line=dict(width=1, color='purple')
+    ))
+
+    fig_evictions.update_layout(
+        showlegend=False,
+        title=None,
+        template="simple_white",
+        width=800,
+        height=400,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(
+            title=None,
+            tickmode='linear',
+            dtick=1,
+            tickformat=".1f",
+            range=[
+                df_loaded_programs_cache['elapsed_time_hours'].min(),
+                df_loaded_programs_cache['elapsed_time_hours'].max()
+            ],
+            anchor='y',
+            position=0
+        ),
+        yaxis=dict(
+            title=None,
+            range=[0, 20],
+            tickvals=[0, 5, 10, 15, 20],
+            anchor='x',
+            position=0
+        )
+    )
+
+    fig_evictions.write_image(f"{experiment}_LoadedProgramsCacheEvictions.pdf")
+
+def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
+    # experiments should look like ["2048PC", "1024PC", "512PC"]
+    # df_lp_stats should look like [2048_df_lp_stats, 1024_df_lp_stats, 512_df_lp_stats]
+    data = {
+        "PC Count":                     [exp for exp in experiments],
+        "Misses Mean":                  [df_lp_stat['misses'].mean() for df_lp_stat in df_lp_stats],
+        "Evictions Mean":               [df_lp_stat['evictions'].mean() for df_lp_stat in df_lp_stats],
+        "Program Cache Time Mean (µs)": [df_program_cache['program_cache_us'].mean() for df_program_cache in df_program_caches],
+    }
+
+    # Create and sort DataFrame
+    df = pd.DataFrame(data)
+    df["PC Count Numeric"] = [exp for exp in experiments]
+    df = df.sort_values("PC Count Numeric")
+
+    # Build figure with secondary y
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Primary y-axis traces (Misses & Evictions)
+    fig.add_trace(
+        go.Scatter(
+            x=df["PC Count Numeric"],
+            y=df["Misses Mean"],
+            mode="lines+markers",
+            marker=dict(symbol="circle", size=8),
+            name="Misses Mean"
+        ),
+        secondary_y=False
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df["PC Count Numeric"],
+            y=df["Evictions Mean"],
+            mode="lines+markers",
+            marker=dict(symbol="square", size=8),
+            name="Evictions Mean"
+        ),
+        secondary_y=False
+    )
+
+    # Secondary y-axis trace (Program Cache Time)
+    fig.add_trace(
+        go.Scatter(
+            x=df["PC Count Numeric"],
+            y=df["Program Cache Time Mean (µs)"],
+            mode="lines+markers",
+            marker=dict(symbol="triangle-up", size=8),
+            name="Program Cache Time (µs)"
+        ),
+        secondary_y=True
+    )
+
+    # Update axes ranges and ticks
+    fig.update_yaxes(
+        title_text=None,
+        range=[0, 1.0],
+        tickvals=[0.0, 0.25, 0.5, 0.75, 1.0],
+        secondary_y=False
+    )
+    fig.update_yaxes(
+        title_text=None,
+        range=[0, 45000],
+        tickvals=[0, 15000, 30000, 45000],
+        ticktext=["0", "15k", "30k", "45k"],
+        secondary_y=True
+    )
+
+    # X-axis ticks and range
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=[512, 1024, 1536, 2048],
+        ticktext=["512", "1024", "", "2048"],
+        range=[500, 2100]
+    )
+
+    # Global layout styling
+    fig.update_layout(
+        font=dict(family="serif", size=20),
+        showlegend=False,
+        margin=dict(l=20, r=20, t=20, b=20),
+        width=800,
+        height=400
+    )
+
+    # Export to PDF
+    fig.write_image("CachePerformance.pdf")
+
 tps_df = parse_tps_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-pc_df = parse_program_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-pcp_df = parse_program_cache_prune_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-lp_df = parse_loaded_programs_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
 make_tps_plot("1_5TB_1", tps_df)
+
+pc_df = parse_program_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
+make_pc_plot("1_5TB_1", pc_df)
+
+pcp_df = parse_program_cache_prune_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
+make_pc_prune_plot("1_5TB_1", pcp_df)
+
+lp_df = parse_loaded_programs_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
+make_pc_misses_plot("1_5TB_1", lp_df)
+make_pc_evictions_plot("1_5TB_1", lp_df)
+
