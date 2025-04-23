@@ -234,7 +234,7 @@ def make_page_fault_overlay_plot(experiments: list[str], dfs: list[pd.DataFrame]
     )
 
     # Save the overlaid plot
-    fig.write_image(f"{output_file}.pdf")
+    fig.write_image(f"figures/{output_file}.pdf")
 
 def make_page_fault_overlay_histogram(experiments: list[str],
                                       dfs: list[pd.DataFrame],
@@ -281,7 +281,7 @@ def make_page_fault_overlay_histogram(experiments: list[str],
         height=400,
     )
 
-    fig.write_image(f"{output_file}.pdf")
+    fig.write_image(f"figures/{output_file}.pdf")
 
 def truncate_warmup(df):
     # Truncate entire series to start five minutes after the major fault peak
@@ -315,27 +315,27 @@ pc_512_df = parse_memory_logs(PC_512)
 make_page_fault_overlay_plot(
     ["512PC", "1024PC", "2048PC"],
     [pc_512_df, pc_1024_df, pc_2048_df],
-    "Test"
+    "Min_Flt"
 )
 
 make_page_fault_overlay_plot(
     ["512PC", "1024PC", "2048PC"],
     [pc_512_df, pc_1024_df, pc_2048_df],
-    "Test_Maj",
+    "Maj_Flt",
     True
 )
 
 make_page_fault_overlay_histogram(
     ["512PC", "1024PC", "2048PC"],
     [pc_512_df, pc_1024_df, pc_2048_df],
-    "Test_Min_Hist",
+    "Min_Flt_Hist",
     False
 )
 
 make_page_fault_overlay_histogram(
     ["512PC", "1024PC", "2048PC"],
     [pc_512_df, pc_1024_df, pc_2048_df],
-    "Test_Maj_Hist",
+    "Maj_Flt_Hist",
     True
 )
 
