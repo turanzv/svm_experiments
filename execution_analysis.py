@@ -425,7 +425,7 @@ def make_pc_trend_plot(pc_sizes: list[int],
     )
 
     # Export to PDF
-    fig.write_image("CachePerformance.pdf")
+    fig.write_image("figures/CachePerformance.pdf")
 
 def generate_figures(experiment, log_file):
     tps_df = parse_tps_df(log_file)
@@ -463,4 +463,15 @@ generate_figures("figures/execution/512_GB_1", GB_512_1)
 generate_figures("figures/execution/512_GB_0", GB_512_0)
 generate_figures("figures/execution/256_GB_1", GB_256_1)
 generate_figures("figures/execution/256_GB_0", GB_256_0)
-# generate_figures("figures/execution/128_GB_1", GB_128_0)
+generate_figures("figures/execution/128_GB_1", GB_128_0)
+
+pc_512_df = parse_program_cache_df(PC_512)
+lpc_512_df = parse_loaded_programs_cache_df(PC_512)
+
+pc_1024_df = parse_program_cache_df(PC_1024)
+lpc_1024_df = parse_loaded_programs_cache_df(PC_1024)
+
+pc_2048_df = parse_program_cache_df(PC_2048)
+lpc_2048_df = parse_loaded_programs_cache_df(PC_2048)
+
+make_pc_trend_plot([512, 1024, 2048], [pc_512_df, pc_1024_df, pc_2048_df], [lpc_512_df, lpc_1024_df, lpc_2048_df])
