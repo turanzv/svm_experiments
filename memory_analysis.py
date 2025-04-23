@@ -188,6 +188,54 @@ def make_page_fault_histogram(experiment, df, maj=False):
 
     fig.write_image(f"{experiment}_{file_text}_faults.pdf")
 
+
+def make_page_fault_overlay_plot(experiments: list[str], dfs: list[pd.DataFrame], output_file: str, maj: bool = False):
+    """
+    Create an overlaid page faults plot for multiple experiments.
+    :param experiments: List of experiment names
+    :param dfs: List of DataFrames corresponding to each experiment
+    :param output_file: Base filename (without extension) for saving the PDF
+    :param maj: If True, plot major page faults; otherwise, plot minor page faults.
+    """
+    fig = go.Figure()
+
+    for exp, df in zip(experiments, dfs):
+        if maj:
+            series = df['majflt/s']
+            label = f"{exp} Major PF"
+            dash_style = 'dot'
+        else:
+            series = df['minflt/s']
+            label = f"{exp} Minor PF"
+            dash_style = 'solid'
+        fig.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=series,
+                mode='lines',
+                name=label,
+                line=dict(dash=dash_style)
+            )
+        )
+
+    fig.update_layout(
+        font=dict(
+            family="serif",
+            size=20
+        ),
+        margin=dict(l=20, r=20, t=30, b=30),
+        legend_title="Experiment Metrics",
+        showlegend=True,
+        xaxis_title="Hours since start",
+        yaxis_title="Page Faults per Second",
+        template="simple_white",
+        width=800,
+        height=400,
+    )
+
+    # Save the overlaid plot
+    fig.write_image(f"{output_file}.pdf")
+
 def truncate_warmup(df):
     # Truncate entire series to start five minutes after the major fault peak
     peak_time = df['majflt/s'].idxmax()  # hours_since_start index of the major fault peak
@@ -212,6 +260,23 @@ GB_256_1 = 'logs/256G/2025-01-14-22-46-05--memory.log'
 PC_2048 = 'logs/2048PC/2048PC-2025-03-12-19-21-02--memory.log'
 PC_1024 = 'logs/1024PC/1024PC-2025-03-12-07-03-06--memory.log'
 PC_512 = 'logs/512PC/512PC-2025-03-11-17-33-19--memory.log'
+
+pc_2048_df = parse_memory_logs(PC_2048)
+pc_1024_df = parse_memory_logs(PC_1024)
+pc_512_df = parse_memory_logs(PC_512)
+
+make_page_fault_overlay_plot(
+    ["512PC", "1024PC", "2048PC"],
+    [pc_512_df, pc_1024_df, pc_2048_df],
+    "Test"
+)
+
+make_page_fault_overlay_plot(
+    ["512PC", "1024PC", "2048PC"],
+    [pc_512_df, pc_1024_df, pc_2048_df],
+    "Test_Maj",
+    True
+)
 
 generate_figures("figures/memory/1_5TB",TB_15_1)
 generate_figures("figures/memory/1_TB_1",TB_1_1)
