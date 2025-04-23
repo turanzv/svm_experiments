@@ -48,11 +48,11 @@ def parse_memory_logs(log_file_path):
     df['RSS (GB)'] = df['rss'] / (1024 * 1024)
     df['VSZ (GB)'] = df['vsz'] / (1024 * 1024)
 
+    df = truncate_warmup(df)
+
     return df
 
 def make_full_memory_plot(experiment, df):
-
-    df = truncate_warmup(df)
 
     # Create subplots with secondary y-axis
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -125,8 +125,6 @@ def make_rss_vsz_plot(experiment, df):
     fig.write_image(""+experiment+"_RSS_VSZ.pdf")
 
 def make_page_fault_plot(experiment, df):
-
-    df = truncate_warmup(df)
 
     fig = go.Figure()
 
@@ -207,24 +205,19 @@ def generate_figures(experiment, log_file):
     make_page_fault_histogram(experiment, df, maj=True)
 
 TB_15_1 = 'logs/1_5TB/2025-01-07-04-19-59--memory.log'
-TB_15_0 = ''
 TB_1_1 = 'logs/1TB/2025-01-07-18-55-31--memory.log'
-# TB_1_0 = 'logs/1TB/2025-01-04-08-18-48-mainnet-beta-memory.log'
 GB_512_1 = 'logs/512G/2025-01-08-19-57-14--memory.log'
-# GB_512_0 = 'logs/512G/2025-01-04-21-51-50-mainnet-beta-memory.log'
 GB_256_1 = 'logs/256G/2025-01-14-22-46-05--memory.log'
-# GB_256_0 = 'logs/256G/2025-01-05-10-02-22-mainnet-beta-memory.log'
-# GB_128_0 = ''
 
 PC_2048 = 'logs/2048PC/2048PC-2025-03-12-19-21-02--memory.log'
 PC_1024 = 'logs/1024PC/1024PC-2025-03-12-07-03-06--memory.log'
 PC_512 = 'logs/512PC/512PC-2025-03-11-17-33-19--memory.log'
 
-generate_figures("1_5TB",TB_15_1)
-generate_figures("1_TB_1",TB_1_1)
-# generate_figures("1_TB_0",TB_1_0)
-generate_figures("512_GB_1",GB_512_1)
-# generate_figures("512_GB_0",GB_512_0)
-generate_figures("256_GB_1",GB_256_1)
-# generate_figures("256_GB_0",GB_256_0)
-# generate_figures("",)
+generate_figures("figures/memory/1_5TB",TB_15_1)
+generate_figures("figures/memory/1_TB_1",TB_1_1)
+generate_figures("figures/memory/512_GB_1",GB_512_1)
+generate_figures("figures/memory/256_GB_1",GB_256_1)
+
+generate_figures("figures/memory/2048_PC",PC_2048)
+generate_figures("figures/memory/1024_PC",PC_1024)
+generate_figures("figures/memory/512_PC",PC_512)

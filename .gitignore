@@ -1,6 +1,5 @@
 *.log
 *.csv
 *.png
-*.pdf
 *.zip
 .DS_Store

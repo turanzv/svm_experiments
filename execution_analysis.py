@@ -339,19 +339,20 @@ def make_pc_evictions_plot(experiment, df_loaded_programs_cache):
 
     fig_evictions.write_image(f"{experiment}_LoadedProgramsCacheEvictions.pdf")
 
-def make_pc_trend_plot(pc_sizes, df_program_caches, df_lp_stats):
+def make_pc_trend_plot(pc_sizes: list[int],
+                        df_program_caches: list[pd.DataFrame],
+                        df_lp_stats: list[pd.DataFrame]):
     # experiments should look like [2048, 1024, 512]
     # df_lp_stats should look like [2048_df_lp_stats, 1024_df_lp_stats, 512_df_lp_stats]
     data = {
-        "PC Count":                     [pc_size for pc_size in pc_sizes],
-        "Misses Mean":                  [df_lp_stat['misses'].mean() for df_lp_stat in df_lp_stats],
-        "Evictions Mean":               [df_lp_stat['evictions'].mean() for df_lp_stat in df_lp_stats],
-        "Program Cache Time Mean (µs)": [df_program_cache['program_cache_us'].mean() for df_program_cache in df_program_caches],
+        "PC Count":                     pc_sizes,
+        "Misses Mean":                  [df_lp_stat['misses'].mean()                    for df_lp_stat in df_lp_stats],
+        "Evictions Mean":               [df_lp_stat['evictions'].mean()                 for df_lp_stat in df_lp_stats],
+        "Program Cache Time Mean (µs)": [df_program_cache['program_cache_us'].mean()    for df_program_cache in df_program_caches],
     }
 
     # Create and sort DataFrame
     df = pd.DataFrame(data)
-    df["PC Count"] = [2048, 1024, 512]
     df = df.sort_values("PC Count")
 
     # Build figure with secondary y
@@ -426,16 +427,40 @@ def make_pc_trend_plot(pc_sizes, df_program_caches, df_lp_stats):
     # Export to PDF
     fig.write_image("CachePerformance.pdf")
 
-tps_df = parse_tps_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-make_tps_plot("1_5TB_1", tps_df)
+def generate_figures(experiment, log_file):
+    tps_df = parse_tps_df(log_file)
+    make_tps_plot(experiment, tps_df)
 
-pc_df = parse_program_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-make_pc_plot("1_5TB_1", pc_df)
+    pc_df = parse_program_cache_df(log_file)
+    make_pc_plot(experiment, pc_df)
 
-pcp_df = parse_program_cache_prune_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-make_pc_prune_plot("1_5TB_1", pcp_df)
+    pcp_df = parse_program_cache_prune_df(log_file)
+    make_pc_prune_plot(experiment, pcp_df)
 
-lp_df = parse_loaded_programs_cache_df('logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log')
-make_pc_misses_plot("1_5TB_1", lp_df)
-make_pc_evictions_plot("1_5TB_1", lp_df)
+    lp_df = parse_loaded_programs_cache_df(log_file)
+    make_pc_misses_plot(experiment, lp_df)
+    make_pc_evictions_plot(experiment, lp_df)
 
+TB_15_1 = 'logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log'
+TB_15_0 = 'logs/1_5TB/2025-01-01-04-05-37-mainnet-beta.log'
+TB_1_1 = 'logs/1TB/2025-01-07-18-58-39-mainnet-beta-1TB.log'
+TB_1_0 = 'logs/1TB/2025-01-04-08-21-52-mainnet-beta-1TB.log'
+GB_512_1 = 'logs/512G/2025-01-08-20-00-20-mainnet-beta-512G.log'
+GB_512_0 = 'logs/512G/2025-01-04-21-54-59-mainnet-beta-512G.log'
+GB_256_1 = 'logs/256G/2025-01-14-22-46-43-mainnet-beta-256GB.log'
+GB_256_0 = 'logs/256G/2025-01-05-10-04-13-mainnet-beta-256G.log'
+# GB_128_0 = 'archive/old_validator_logs/128G/transaction-only-128GB-2024-10-07-06-55-38-mainnet-beta.log'
+
+PC_2048 = 'logs/2048PC/2048PC-2025-03-12-19-21-02-mainnet-beta.log'
+PC_1024 = 'logs/1024PC/1024PC-2025-03-12-07-03-06-mainnet-beta.log'
+PC_512 = 'logs/512PC/512PC-2025-03-11-17-33-19-mainnet-beta.log'
+
+generate_figures("figures/execution/1_5_TB_1", TB_15_1)
+generate_figures("figures/execution/1_5_TB_0", TB_15_0)
+generate_figures("figures/execution/1_TB_1", TB_1_1)
+generate_figures("figures/execution/1_TB_0", TB_1_0)
+generate_figures("figures/execution/512_GB_1", GB_512_1)
+generate_figures("figures/execution/512_GB_0", GB_512_0)
+generate_figures("figures/execution/256_GB_1", GB_256_1)
+generate_figures("figures/execution/256_GB_0", GB_256_0)
+# generate_figures("figures/execution/128_GB_1", GB_128_0)
