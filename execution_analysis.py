@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import re
 
+pio.kaleido.scope.mathjax = None
+
 def parse_tps_df(log_file):
     data = []
     with open(log_file, 'r') as file:
@@ -463,7 +465,7 @@ generate_figures("figures/execution/512_GB_1", GB_512_1)
 generate_figures("figures/execution/512_GB_0", GB_512_0)
 generate_figures("figures/execution/256_GB_1", GB_256_1)
 generate_figures("figures/execution/256_GB_0", GB_256_0)
-generate_figures("figures/execution/128_GB_1", GB_128_0)
+# generate_figures("figures/execution/128_GB_1", GB_128_0)
 
 pc_512_df = parse_program_cache_df(PC_512)
 lpc_512_df = parse_loaded_programs_cache_df(PC_512)
