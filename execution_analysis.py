@@ -339,11 +339,11 @@ def make_pc_evictions_plot(experiment, df_loaded_programs_cache):
 
     fig_evictions.write_image(f"{experiment}_LoadedProgramsCacheEvictions.pdf")
 
-def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
-    # experiments should look like ["2048PC", "1024PC", "512PC"]
+def make_pc_trend_plot(pc_sizes, df_program_caches, df_lp_stats):
+    # experiments should look like [2048, 1024, 512]
     # df_lp_stats should look like [2048_df_lp_stats, 1024_df_lp_stats, 512_df_lp_stats]
     data = {
-        "PC Count":                     [exp for exp in experiments],
+        "PC Count":                     [pc_size for pc_size in pc_sizes],
         "Misses Mean":                  [df_lp_stat['misses'].mean() for df_lp_stat in df_lp_stats],
         "Evictions Mean":               [df_lp_stat['evictions'].mean() for df_lp_stat in df_lp_stats],
         "Program Cache Time Mean (µs)": [df_program_cache['program_cache_us'].mean() for df_program_cache in df_program_caches],
@@ -351,8 +351,8 @@ def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
 
     # Create and sort DataFrame
     df = pd.DataFrame(data)
-    df["PC Count Numeric"] = [exp for exp in experiments]
-    df = df.sort_values("PC Count Numeric")
+    df["PC Count"] = [2048, 1024, 512]
+    df = df.sort_values("PC Count")
 
     # Build figure with secondary y
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -360,7 +360,7 @@ def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
     # Primary y-axis traces (Misses & Evictions)
     fig.add_trace(
         go.Scatter(
-            x=df["PC Count Numeric"],
+            x=df["PC Count"],
             y=df["Misses Mean"],
             mode="lines+markers",
             marker=dict(symbol="circle", size=8),
@@ -370,7 +370,7 @@ def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
     )
     fig.add_trace(
         go.Scatter(
-            x=df["PC Count Numeric"],
+            x=df["PC Count"],
             y=df["Evictions Mean"],
             mode="lines+markers",
             marker=dict(symbol="square", size=8),
@@ -382,7 +382,7 @@ def make_pc_trend_plot(experiments, df_program_caches, df_lp_stats):
     # Secondary y-axis trace (Program Cache Time)
     fig.add_trace(
         go.Scatter(
-            x=df["PC Count Numeric"],
+            x=df["PC Count"],
             y=df["Program Cache Time Mean (µs)"],
             mode="lines+markers",
             marker=dict(symbol="triangle-up", size=8),
