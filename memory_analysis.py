@@ -236,6 +236,53 @@ def make_page_fault_overlay_plot(experiments: list[str], dfs: list[pd.DataFrame]
     # Save the overlaid plot
     fig.write_image(f"{output_file}.pdf")
 
+def make_page_fault_overlay_histogram(experiments: list[str],
+                                      dfs: list[pd.DataFrame],
+                                      output_file: str,
+                                      maj: bool = False):
+    """
+    Create an overlaid histogram of page faults for multiple experiments.
+    :param experiments: List of experiment names
+    :param dfs: List of DataFrames corresponding to each experiment
+    :param output_file: Base filename (without extension) for saving the PDF
+    :param maj: If True, plot major page faults; otherwise, plot minor page faults.
+    """
+    # Select column and title based on maj flag
+    column = "majflt/s" if maj else "minflt/s"
+    title_text = "Major" if maj else "Minor"
+
+    # 1) compute shared binning across all dataframes:
+    all_vals = pd.concat([df[column] for df in dfs])
+    min_val, max_val = all_vals.min(), all_vals.max()
+    bin_size = (max_val - min_val) / 50  # or whatever # of bins you like
+
+    fig = go.Figure()
+
+    for exp, df in zip(experiments, dfs):
+        fig.add_trace(
+            go.Histogram(
+                x=df[column],
+                name=f"{exp} {title_text} PF",
+                opacity=0.6,
+                xbins=dict(start=min_val, end=max_val, size=bin_size),
+                marker=dict(line=dict(width=1, color="black"))
+            )
+        )
+
+    fig.update_layout(
+        barmode="overlay",
+        margin=dict(l=20, r=20, t=30, b=30),
+        legend_title="Experiments",
+        xaxis_title=f"{title_text} Page Faults per Second",
+        yaxis_title="Occurrences",
+        # yaxis_type="log",
+        template="simple_white",
+        width=800,
+        height=400,
+    )
+
+    fig.write_image(f"{output_file}.pdf")
+
 def truncate_warmup(df):
     # Truncate entire series to start five minutes after the major fault peak
     peak_time = df['majflt/s'].idxmax()  # hours_since_start index of the major fault peak
@@ -275,6 +322,20 @@ make_page_fault_overlay_plot(
     ["512PC", "1024PC", "2048PC"],
     [pc_512_df, pc_1024_df, pc_2048_df],
     "Test_Maj",
+    True
+)
+
+make_page_fault_overlay_histogram(
+    ["512PC", "1024PC", "2048PC"],
+    [pc_512_df, pc_1024_df, pc_2048_df],
+    "Test_Min_Hist",
+    False
+)
+
+make_page_fault_overlay_histogram(
+    ["512PC", "1024PC", "2048PC"],
+    [pc_512_df, pc_1024_df, pc_2048_df],
+    "Test_Maj_Hist",
     True
 )
 
