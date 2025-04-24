@@ -127,6 +127,8 @@ def make_flt_plot(df, fig, color, name, idx):
     )
     fig.update_layout(
         legend_title="Page faults",
+        xaxis_title="Time / Hours",
+        yaxis_title="Page faults per second",
         **options
     )
 
@@ -189,11 +191,12 @@ def make_full_memory_plot(experiment, df):
     )
 
     # Set y-axes titles and scaling
-    # fig.update_yaxes(title_text="Memory / GB", secondary_y=False)
+    fig.update_yaxes(title_text="Memory / GB", secondary_y=False)
     # fig.update_yaxes(title_text="Page Faults", secondary_y=True)
 
     fig.update_layout(
         legend_title="Metrics",
+        xaxis_title = "Time / Hours",
         **options
     )
 
