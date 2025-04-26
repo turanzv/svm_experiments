@@ -221,10 +221,6 @@ def make_full_memory_plot(experiment, df):
         **options
     )
 
-    fig.update_layout(
-        width = 1000
-    )
-
     fig.write_image(""+experiment+"_Mem.pdf")
 
 
