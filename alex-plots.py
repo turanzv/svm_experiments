@@ -221,6 +221,19 @@ def make_full_memory_plot(experiment, df):
         **options
     )
 
+    fig.update_layout(
+        legend = dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.12,
+                xanchor="center",
+                x=0.5,
+                bordercolor="Black",
+                borderwidth=1
+        ),
+        height = 500
+    )
+
     fig.write_image(""+experiment+"_Mem.pdf")
 
 
