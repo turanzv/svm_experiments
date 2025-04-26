@@ -2,7 +2,9 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import signal
+import plotly.io as pio
 
+pio.kaleido.scope.mathjax = None
 
 def parse_memory_logs(log_file_path):
     def truncate_warmup(df):
@@ -96,7 +98,7 @@ def make_rss_vsz_plot(df, fig, color, name):
         go.Scatter(
             x=df.index,
             y=df['RSS (GB)'],
-            name=f"{name} RSS (GB)",
+            name=f"{name} RSS",
             line={"color": color, "dash": "solid"}
         )
     )
@@ -104,16 +106,15 @@ def make_rss_vsz_plot(df, fig, color, name):
         go.Scatter(
             x=df.index,
             y=df['VSZ (GB)'],
-            name=f"{name} VSZ (GB)",
+            name=f"{name} VSZ",
             line={"color": color, "dash": "dot"})
     )
     fig.update_layout(
-        legend_title="Memory Metrics",
+        legend_title="Memory Metrics (GB)",
         xaxis_title="Time / hours",
         yaxis_title="Memory / GB",
         **options
     )
-
 
 # TODO: Subsample and clarify
 def make_flt_plot(df, fig, color, name, idx):
@@ -121,12 +122,11 @@ def make_flt_plot(df, fig, color, name, idx):
         go.Scatter(
             x=df.index,
             y=df[idx].rolling(window=100).max().rolling(window=100).mean(),
-            name=f"{name} {idx}",
+            name=f"{name}",
             line={"color": color}
         )
     )
     fig.update_layout(
-        legend_title="Page faults",
         xaxis_title="Time / Hours",
         yaxis_title="Page faults per second",
         **options
@@ -156,6 +156,27 @@ def make_page_fault_histogram(df, fig, color, experiment, column):
         **options,
     )
 
+    if column == "majflt/s":
+        fig.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.12,
+                xanchor="center",
+                x=0.5,
+                bordercolor="Black",
+                borderwidth=1
+            ),
+            height = 480,
+            margin = {
+                "l": 20,
+                "r": 20,
+                "t": 85,
+                "b": 25
+            },
+        )
+    else:
+        fig.update_layout(showlegend=False)
 
 def make_full_memory_plot(experiment, df):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -198,6 +219,10 @@ def make_full_memory_plot(experiment, df):
         legend_title="Metrics",
         xaxis_title = "Time / Hours",
         **options
+    )
+
+    fig.update_layout(
+        width = 1000
     )
 
     fig.write_image(""+experiment+"_Mem.pdf")
@@ -257,12 +282,37 @@ def generate_faults():
         df = parse_memory_logs(program_cache[experiment]["log"])
         make_flt_plot(df, fig, program_cache[experiment]["color"], experiment, "majflt/s")
 
+    fig.update_layout(
+        yaxis_title="Major Page faults per second",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.12,
+            xanchor="center",
+            x=0.5,
+            bordercolor="Black",
+            borderwidth=1
+        ),
+        height = 480,
+        margin = {
+            "l": 20,
+            "r": 20,
+            "t": 85,
+            "b": 25
+        },
+    )
+
     fig.write_image("figures/majfaults.pdf")
 
     fig = go.Figure()
     for experiment in program_cache.keys():
         df = parse_memory_logs(program_cache[experiment]["log"])
         make_flt_plot(df, fig, program_cache[experiment]["color"], experiment, "minflt/s")
+
+    fig.update_layout(
+        yaxis_title="Minor page faults per second",
+        showlegend=False,
+    )
 
     fig.write_image("figures/minfaults.pdf")
 
