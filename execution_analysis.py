@@ -182,22 +182,6 @@ def make_tps_plot(experiment, df):
 
     fig.write_image(f"{experiment}_Exec_TPS.pdf")
 
-def add_prune_histogram(df, fig, color, experiment, column="program_cache_prune_ms"):
-    filtered = df[df[column] > 0][column]
-    if filtered.empty:
-        return
-    fig.add_trace(go.Histogram(
-        x=filtered,
-        marker=dict(color=color, line=dict(width=1, color='black')),
-        opacity=0.75,
-        name=experiment,
-        xbins=dict(
-            start=int(filtered.min()),
-            end=int(filtered.max()),
-            size=1,
-        ),
-    ))
-
 def make_pc_trend_plot(pc_sizes: list[int],
                         df_program_caches: list[pd.DataFrame],
                         df_lp_stats: list[pd.DataFrame]):
@@ -369,7 +353,7 @@ def generate_pc_grouped_histogram():
     fig = go.Figure()
     for experiment in program_cache.keys():
         df = parse_program_cache_prune_df(program_cache[experiment]["log"])
-        add_prune_histogram(df, fig, program_cache[experiment]["color"], experiment)
+        add_pc_histogram(df, fig, program_cache[experiment]["color"], experiment, column="program_cache_prune_ms")
     fig.update_layout(
         barmode='group',
         showlegend=False,
