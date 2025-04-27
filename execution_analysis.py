@@ -27,6 +27,8 @@ def parse_tps_df(log_file):
     df['start'] = df['end'] - df['execute_us']
     df['tps'] = df['total_transactions_executed'] * 1_000_000 / df['execute_us']
 
+    return df
+
     start_time = df.start.min() // 1000000 * 1000000
     end_time = (df.start.max() + 1000000) // 1000000 * 1000000
     time_step = 100_000 # 100,000 nanosends = .1 second
@@ -399,6 +401,31 @@ def generate_pc_grouped_histogram():
     )
     fig.write_image("figures/grouped_program_cache_time_hist.pdf")
 
+def generate_tps_grouped_histogram():
+    fig = go.Figure()
+    for experiment in execution.keys():
+        df_tps = parse_tps_df(execution[experiment]["log"])
+        add_pc_histogram(df_tps, fig, execution[experiment]["color"], experiment, "tps", size=1000)
+    fig.update_layout(
+        barmode='group',
+        showlegend=True,
+        template="simple_white",
+        width=900,
+        height=420,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=25, b=25),
+        xaxis=dict(
+            title="TPS per Batch",
+            tickformat="d",
+            range=[0, 20000],
+        ),
+        yaxis=dict(
+            title="Occurrences / count",
+            tickformat="d",
+        ),
+    )
+    fig.write_image("figures/grouped_tps_hist.pdf")
+
 program_cache = {
     "PC_2048": {
         "log": "logs/2048PC/2048PC-2025-03-12-19-21-02-mainnet-beta.log",
@@ -415,38 +442,39 @@ program_cache = {
 }
 
 execution = {
-    "1.5TB_1": {
-        "log": "logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log",
-        'color': "blue",
-    },
+    # "1.5TB_1": {
+    #     "log": "logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log",
+    #     'color': "blue",
+    # },
     "1.5TB_0": {
         "log": "logs/1_5TB/2025-01-01-04-05-37-mainnet-beta.log",
-        'color': "blue",
+        'color': "red",
     },
-    "1TB_1": {
-        "log": "logs/1TB/2025-01-07-18-58-39-mainnet-beta-1TB.log",
-        'color': "blue",
-    },
+    # "1TB_1": {
+    #     "log": "logs/1TB/2025-01-07-18-58-39-mainnet-beta-1TB.log",
+    #     'color': "blue",
+    # },
     "1TB_0": {
         "log": "logs/1TB/2025-01-04-08-21-52-mainnet-beta-1TB.log",
-        'color': "blue",
+        'color': "orange",
     },
-    "512GB_1": {
-        "log": "logs/512G/2025-01-08-20-00-20-mainnet-beta-512G.log",
-        'color': "blue",
-    },
+    # "512GB_1": {
+    #     "log": "logs/512G/2025-01-08-20-00-20-mainnet-beta-512G.log",
+    #     'color': "blue",
+    # },
     "512GB_0": {
         "log": "logs/512G/2025-01-04-21-54-59-mainnet-beta-512G.log",
-        'color': "blue",
+        'color': "yellow",
     },
-    "256GB_1": {
-        "log": "logs/256G/2025-01-14-22-46-43-mainnet-beta-256GB.log",
-        'color': "blue",
-    },
+    # "256GB_1": {
+    #     "log": "logs/256G/2025-01-14-22-46-43-mainnet-beta-256GB.log",
+    #     'color': "blue",
+    # },
     "256GB_0": {
         "log": "logs/256G/2025-01-05-10-04-13-mainnet-beta-256G.log",
-        'color': "blue",
+        'color': "green",
     },
 }
 
+generate_tps_grouped_histogram()
 generate_pc_grouped_histogram()
