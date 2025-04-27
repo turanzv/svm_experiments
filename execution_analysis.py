@@ -182,164 +182,21 @@ def make_tps_plot(experiment, df):
 
     fig.write_image(f"{experiment}_Exec_TPS.pdf")
 
-def make_pc_plot(experiment, df_program_cache):
-    fig1 = go.Figure()
-    fig1.add_trace(go.Scatter(
-        x=df_program_cache['elapsed_time_hours'],
-        y=df_program_cache['program_cache_us'],
-        mode='markers',
-        marker=dict(size=2, color='blue')
-    ))
-
-    fig1.update_layout(
-        showlegend=False,
-        title=None,
-        template="simple_white",
-        width=800,
-        height=400,
-        font=dict(family="serif", size=20),
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(
-            title=None,
-            tickmode='linear',
-            dtick=1,
-            tickformat=".1f",
-            range=[
-                df_program_cache['elapsed_time_hours'].min(),
-                df_program_cache['elapsed_time_hours'].max()
-            ],
-            anchor='y',
-            position=0
+def add_prune_histogram(df, fig, color, experiment, column="program_cache_prune_ms"):
+    filtered = df[df[column] > 0][column]
+    if filtered.empty:
+        return
+    fig.add_trace(go.Histogram(
+        x=filtered,
+        marker=dict(color=color, line=dict(width=1, color='black')),
+        opacity=0.75,
+        name=experiment,
+        xbins=dict(
+            start=int(filtered.min()),
+            end=int(filtered.max()),
+            size=1,
         ),
-        yaxis=dict(
-            title=None,
-            range=[0, 4_000_000],
-            tickvals=[0, 1_000_000, 2_000_000, 3_000_000, 4_000_000],
-            ticktext=["0", "1M", "2M", "3M", "4M"],
-            anchor='x',
-            position=0
-        )
-    )
-    fig1.write_image(f"{experiment}_ProgramCacheTime.pdf")
-
-def make_pc_prune_plot(experiment, df_program_cache_prune):
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(
-        x=df_program_cache_prune['elapsed_time_hours'],
-        y=df_program_cache_prune['program_cache_prune_ms'],
-        mode='markers',
-        marker=dict(size=2, color='orange')
     ))
-
-    fig2.update_layout(
-        showlegend=False,
-        title=None,
-        template="simple_white",
-        width=800,
-        height=400,
-        font=dict(family="serif", size=20),
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(
-            title=None,
-            tickmode='linear',
-            dtick=1,
-            tickformat=".1f",
-            range=[
-                df_program_cache_prune['elapsed_time_hours'].min(),
-                df_program_cache_prune['elapsed_time_hours'].max()
-            ],
-            anchor='y',
-            position=0
-        ),
-        yaxis=dict(
-            title=None,
-            range=[0, 120],
-            tickvals=[0, 30, 60, 90, 120],
-            anchor='x',
-            position=0
-        )
-    )
-    fig2.write_image(f"{experiment}_ProgramCachePruneTime.pdf")
-
-def make_pc_misses_plot(experiment, df_loaded_programs_cache):
-    fig_misses = go.Figure()
-    fig_misses.add_trace(go.Scatter(
-        x=df_loaded_programs_cache['elapsed_time_hours'],
-        y=df_loaded_programs_cache['misses'],
-        mode='lines',
-        line=dict(width=1, color='red')
-    ))
-
-    fig_misses.update_layout(
-        showlegend=False,
-        title=None,
-        template="simple_white",
-        width=800,
-        height=400,
-        font=dict(family="serif", size=20),
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(
-            title=None,
-            tickmode='linear',
-            dtick=1,
-            tickformat=".1f",
-            range=[
-                df_loaded_programs_cache['elapsed_time_hours'].min(),
-                df_loaded_programs_cache['elapsed_time_hours'].max()
-            ],
-            anchor='y',
-            position=0
-        ),
-        yaxis=dict(
-            title=None,
-            range=[0, 20],
-            tickvals=[0, 5, 10, 15, 20],
-            anchor='x',
-            position=0
-        )
-    )
-
-    fig_misses.write_image(f"{experiment}_LoadedProgramsCacheMisses.pdf")
-
-def make_pc_evictions_plot(experiment, df_loaded_programs_cache):
-    fig_evictions = go.Figure()
-    fig_evictions.add_trace(go.Scatter(
-        x=df_loaded_programs_cache['elapsed_time_hours'],
-        y=df_loaded_programs_cache['evictions'],
-        mode='lines',
-        line=dict(width=1, color='purple')
-    ))
-
-    fig_evictions.update_layout(
-        showlegend=False,
-        title=None,
-        template="simple_white",
-        width=800,
-        height=400,
-        font=dict(family="serif", size=20),
-        margin=dict(l=20, r=20, t=20, b=20),
-        xaxis=dict(
-            title=None,
-            tickmode='linear',
-            dtick=1,
-            tickformat=".1f",
-            range=[
-                df_loaded_programs_cache['elapsed_time_hours'].min(),
-                df_loaded_programs_cache['elapsed_time_hours'].max()
-            ],
-            anchor='y',
-            position=0
-        ),
-        yaxis=dict(
-            title=None,
-            range=[0, 20],
-            tickvals=[0, 5, 10, 15, 20],
-            anchor='x',
-            position=0
-        )
-    )
-
-    fig_evictions.write_image(f"{experiment}_LoadedProgramsCacheEvictions.pdf")
 
 def make_pc_trend_plot(pc_sizes: list[int],
                         df_program_caches: list[pd.DataFrame],
@@ -440,51 +297,172 @@ def make_pc_trend_plot(pc_sizes: list[int],
     # Export to PDF
     fig.write_image("figures/CachePerformance.pdf")
 
-def generate_figures(experiment, log_file):
-    tps_df = parse_tps_df(log_file)
-    make_tps_plot(experiment, tps_df)
+def add_pc_histogram(df, fig, color, experiment, column, size=1):
+    fig.add_trace(go.Histogram(
+        x=df[column],
+        marker=dict(color=color, line=dict(width=1, color='black')),
+        opacity=0.75,
+        name=experiment,
+        xbins=dict(
+            start=int(df[column].min()),
+            end = int(df[column].max()),
+            size = size,
+        )
+    ))
 
-    pc_df = parse_program_cache_df(log_file)
-    make_pc_plot(experiment, pc_df)
+def generate_pc_grouped_histogram():
+    fig = go.Figure()
+    for experiment in program_cache.keys():
+        df = parse_loaded_programs_cache_df(program_cache[experiment]["log"])
+        add_pc_histogram(df, fig, program_cache[experiment]["color"], experiment, "misses")
+    fig.update_layout(
+        barmode='group',
+        showlegend=True,
+        template="simple_white",
+        width=900,
+        height=480,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=25, b=25),
+        xaxis_title=f"Misses per measurement",
+        yaxis=dict(
+            title="Occurrences / count",
+            tickformat="d",
+        ),
+        xaxis=dict(
+            range=[0,20]
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.12,
+            xanchor="center",
+            x=0.5,
+            bordercolor="Black",
+            borderwidth=1
+        ),
+    )
+    fig.write_image("figures/grouped_misses_hist.pdf")
 
-    pcp_df = parse_program_cache_prune_df(log_file)
-    make_pc_prune_plot(experiment, pcp_df)
+    # Evictions histogram
+    fig = go.Figure()
+    for experiment in program_cache.keys():
+        df = parse_loaded_programs_cache_df(program_cache[experiment]["log"])
+        add_pc_histogram(df, fig, program_cache[experiment]["color"], experiment, "evictions")
+    fig.update_layout(
+        barmode='group',
+        showlegend=False,
+        template="simple_white",
+        width=900,
+        height=420,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=25, b=25),
+        xaxis_title="Evictions per Measurement",
+        yaxis=dict(
+            title="Occurrences / count",
+            tickformat="d"
+        )
+        
+    )
+    fig.write_image("figures/grouped_evictions_hist.pdf")
 
-    lp_df = parse_loaded_programs_cache_df(log_file)
-    make_pc_misses_plot(experiment, lp_df)
-    make_pc_evictions_plot(experiment, lp_df)
+     # Prune time histogram
+    fig = go.Figure()
+    for experiment in program_cache.keys():
+        df = parse_program_cache_prune_df(program_cache[experiment]["log"])
+        add_prune_histogram(df, fig, program_cache[experiment]["color"], experiment)
+    fig.update_layout(
+        barmode='group',
+        showlegend=False,
+        template="simple_white",
+        width=900,
+        height=420,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=25, b=25),
+        xaxis=dict(
+            title="Prune Time per Measurement (ms)",
+            tickformat="d",
+            range=[1, 20]
+        ),
+        yaxis=dict(
+            title="Occurrences / count",
+            tickformat="d"
+        )
+    )
+    fig.write_image("figures/grouped_prune_hist.pdf")
 
-TB_15_1 = 'logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log'
-TB_15_0 = 'logs/1_5TB/2025-01-01-04-05-37-mainnet-beta.log'
-TB_1_1 = 'logs/1TB/2025-01-07-18-58-39-mainnet-beta-1TB.log'
-TB_1_0 = 'logs/1TB/2025-01-04-08-21-52-mainnet-beta-1TB.log'
-GB_512_1 = 'logs/512G/2025-01-08-20-00-20-mainnet-beta-512G.log'
-GB_512_0 = 'logs/512G/2025-01-04-21-54-59-mainnet-beta-512G.log'
-GB_256_1 = 'logs/256G/2025-01-14-22-46-43-mainnet-beta-256GB.log'
-GB_256_0 = 'logs/256G/2025-01-05-10-04-13-mainnet-beta-256G.log'
-# GB_128_0 = 'archive/old_validator_logs/128G/transaction-only-128GB-2024-10-07-06-55-38-mainnet-beta.log'
+    fig = go.Figure()
+    for experiment in program_cache.keys():
+        df = parse_program_cache_df(program_cache[experiment]["log"])
+        add_pc_histogram(df, fig, program_cache[experiment]["color"], experiment, "program_cache_us", size=100_000)
+    fig.update_layout(
+        barmode='group',
+        showlegend=False,
+        template="simple_white",
+        width=900,
+        height=420,
+        font=dict(family="serif", size=20),
+        margin=dict(l=20, r=20, t=25, b=25),
+        xaxis=dict(
+            title="Program Cache Time per Measurement (μs)",
+            tickformat="~s",
+            range=[0, 2_000_000],
+        ),
+        yaxis=dict(
+            title="Occurrences / count",
+            tickformat="~s",
+            type="log",
+        )
+    )
+    fig.write_image("figures/grouped_program_cache_time_hist.pdf")
 
-PC_2048 = 'logs/2048PC/2048PC-2025-03-12-19-21-02-mainnet-beta.log'
-PC_1024 = 'logs/1024PC/1024PC-2025-03-12-07-03-06-mainnet-beta.log'
-PC_512 = 'logs/512PC/512PC-2025-03-11-17-33-19-mainnet-beta.log'
+program_cache = {
+    "PC_2048": {
+        "log": "logs/2048PC/2048PC-2025-03-12-19-21-02-mainnet-beta.log",
+        "color": "red",
+    },
+    "PC_1024": {
+        "log": "logs/1024PC/1024PC-2025-03-12-07-03-06-mainnet-beta.log",
+        "color": "orange",
+    },
+    "PC_512": {
+        "log": "logs/512PC/512PC-2025-03-11-17-33-19-mainnet-beta.log",
+        'color': "blue",
+    }
+}
 
-# generate_figures("figures/execution/1_5_TB_1", TB_15_1)
-# generate_figures("figures/execution/1_5_TB_0", TB_15_0)
-# generate_figures("figures/execution/1_TB_1", TB_1_1)
-# generate_figures("figures/execution/1_TB_0", TB_1_0)
-# generate_figures("figures/execution/512_GB_1", GB_512_1)
-# generate_figures("figures/execution/512_GB_0", GB_512_0)
-# generate_figures("figures/execution/256_GB_1", GB_256_1)
-# generate_figures("figures/execution/256_GB_0", GB_256_0)
-# generate_figures("figures/execution/128_GB_1", GB_128_0)
+execution = {
+    "1.5TB_1": {
+        "log": "logs/1_5TB/2025-01-07-04-20-00-mainnet-beta-1_5TB.log",
+        'color': "blue",
+    },
+    "1.5TB_0": {
+        "log": "logs/1_5TB/2025-01-01-04-05-37-mainnet-beta.log",
+        'color': "blue",
+    },
+    "1TB_1": {
+        "log": "logs/1TB/2025-01-07-18-58-39-mainnet-beta-1TB.log",
+        'color': "blue",
+    },
+    "1TB_0": {
+        "log": "logs/1TB/2025-01-04-08-21-52-mainnet-beta-1TB.log",
+        'color': "blue",
+    },
+    "512GB_1": {
+        "log": "logs/512G/2025-01-08-20-00-20-mainnet-beta-512G.log",
+        'color': "blue",
+    },
+    "512GB_0": {
+        "log": "logs/512G/2025-01-04-21-54-59-mainnet-beta-512G.log",
+        'color': "blue",
+    },
+    "256GB_1": {
+        "log": "logs/256G/2025-01-14-22-46-43-mainnet-beta-256GB.log",
+        'color': "blue",
+    },
+    "256GB_0": {
+        "log": "logs/256G/2025-01-05-10-04-13-mainnet-beta-256G.log",
+        'color': "blue",
+    },
+}
 
-pc_512_df = parse_program_cache_df(PC_512)
-lpc_512_df = parse_loaded_programs_cache_df(PC_512)
-
-pc_1024_df = parse_program_cache_df(PC_1024)
-lpc_1024_df = parse_loaded_programs_cache_df(PC_1024)
-
-pc_2048_df = parse_program_cache_df(PC_2048)
-lpc_2048_df = parse_loaded_programs_cache_df(PC_2048)
-
-make_pc_trend_plot([512, 1024, 2048], [pc_512_df, pc_1024_df, pc_2048_df], [lpc_512_df, lpc_1024_df, lpc_2048_df])
+generate_pc_grouped_histogram()
